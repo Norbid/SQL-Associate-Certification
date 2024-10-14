@@ -1,0 +1,38 @@
+#Data preparation
+
+SELECT id, 
+CASE WHEN location IN ('EMEA', 'NA', 'LATAM', 'APAC') THEN location ELSE 'Unknown' END AS location,
+COALESCE(total_rooms, 100) AS total_rooms,
+COALESCE(staff_count, total_rooms * 1,5) AS staff_count,
+CASE WHEN opening_date = '-' THEN '2023' ELSE opening_date END AS opening_date,
+CASE WHEN target_guests IN ('B.', 'Busniess') THEN 'Business' ELSE target_guests END AS target_guests
+FROM branch;
+
+#Time_taken variable analysis
+SELECT service_id,
+branch_id,
+ROUND(AVG(time_taken), 2) AS avg_time_taken,
+ROUND(MAX(time_taken), 2) AS max_time_taken
+FROM request
+GROUP BY branch_id, service_id;
+
+#Exemplary filtering
+SELECT s.description,
+b.id, 
+b.location,
+r.id AS request_id,
+r.rating
+FROM branch AS b
+LEFT JOIN Request AS r ON r.branch_id = b.id
+LEFT JOIN Service AS s ON s.id = r.service_id
+WHERE b.location IN ('EMEA', 'LATAM') AND s.description IN ('Meal', 'Laundry');
+
+#Filtering on aggregated variable
+SELECT s.id AS service_id,
+b.id AS branch_id,
+ROUND(AVG(r.rating), 2) AS avg_rating
+FROM branch AS b
+LEFT JOIN Request AS r ON r.branch_id = b.id
+LEFT JOIN Service AS s ON s.id = r.service_id
+GROUP BY s.id, b.id
+HAVING ROUND(AVG(r.rating), 2) < 4.5
